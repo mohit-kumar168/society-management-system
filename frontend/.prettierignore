@@ -1,0 +1,34 @@
+# Ignore build output
+build/
+dist/
+out/
+
+# Ignore node dependencies
+node_modules/
+
+# Ignore coverage reports
+coverage/
+
+# Ignore environment files
+.env
+.env.*
+
+# Ignore log files
+*.log
+
+# Ignore lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Ignore compiled files
+*.tsbuildinfo
+
+# Ignore public assets (if not formatting)
+public/
+
+# Ignore specific config files (optional)
+*.config.js
+*.config.cjs
+*.config.mjs
+*.config.ts
