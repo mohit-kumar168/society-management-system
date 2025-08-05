@@ -1,0 +1,34 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.env/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs
+*.log
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# SQLite database
+*.sqlite3
+
+# Local settings
+local_settings.py
+
+# macOS
+.DS_Store
+
+# Node.js (if you use it)
+node_modules/
