@@ -32,3 +32,4 @@ local_settings.py
 
 # Node.js (if you use it)
 node_modules/
+.env
