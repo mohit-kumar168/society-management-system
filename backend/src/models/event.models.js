@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const eventSchema = new Schema(
     {
-        name: {
+        title: {
             type: String,
             required: true,
         },
@@ -13,14 +13,28 @@ const eventSchema = new Schema(
         society: {
             type: Schema.Types.ObjectId,
             ref: "Society",
+            required: true,
         },
-        won: {
+        startDateTime: {
+            type: Date,
+            required: true,
+        },
+        endDateTime: {
+            type: Date,
+            required: true,
+        },
+        venue: {
+            type: String,
+            required: true,
+        },
+        isRecurring: {
             type: Boolean,
             default: false,
         },
-        winDate: {
-            type: Date,
-            default: null,
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
         },
     },
     { timestamps: true }

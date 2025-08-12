@@ -2,6 +2,17 @@ import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const socialLinksSchema = new Schema(
+    {
+        linkedin: String,
+        github: String,
+        instagram: String,
+        twitter: String,
+        website: String,
+    },
+    { _id: false }
+);
+
 const userSchema = new Schema(
     {
         fullName: {
@@ -30,9 +41,19 @@ const userSchema = new Schema(
         },
         role: {
             type: String,
-            enum: ["student", "convener", "admin"],
+            enum: ["admin", "convenor", "leader", "member", "guest"],
             required: true,
         },
+        profilePicture: {
+            type: String,
+            default: null,
+        },
+        studentId: {
+            type: String,
+            unique: true,
+            required: true,
+        },
+        socialLinks: socialLinksSchema,
         refreshToken: {
             type: String,
             default: null,

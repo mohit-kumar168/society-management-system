@@ -1,18 +1,18 @@
 import mongoose, { Schema } from "mongoose";
 
-const meetingSchema = new mongoose.Schema(
+const meetingSchema = new Schema(
     {
         title: {
             type: String,
             required: true,
         },
-        convenerId: {
-            type: mongoose.Schema.Types.ObjectId,
+        convenor: {
+            type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        societyId: {
-            type: mongoose.Schema.Types.ObjectId,
+        society: {
+            type: Schema.Types.ObjectId,
             ref: "Society",
             required: true,
         },

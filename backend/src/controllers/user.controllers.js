@@ -1,4 +1,4 @@
-import { User } from "../models/user.model.js";
+import { User } from "../models/user.models.js";
 import { apiError } from "../utils/apiError.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -20,3 +20,5 @@ const registerUser = async (req, res) => {
         password,
     } = req.body;
 };
+
+export { registerUser };

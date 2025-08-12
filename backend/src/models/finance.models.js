@@ -1,36 +1,42 @@
 import mongoose, { Schema } from "mongoose";
 
-const fundRequestSchema = new Schema(
+const financeSchema = new Schema(
     {
         society: {
             type: Schema.Types.ObjectId,
             ref: "Society",
             required: true,
         },
+        type: {
+            type: String,
+            enum: ["income", "expense"],
+            required: true,
+        },
         amount: {
             type: Number,
             required: true,
         },
-        reason: {
+        description: {
             type: String,
-            required: true,
         },
-        billUrl: {
+        source: {
             type: String,
-            required: true,
         },
         status: {
             type: String,
-            enum: ["pending", "approved", "rejected"],
+            enum: ["pending", "approved"],
             default: "pending",
         },
-        requestedBy: {
+        requested_by: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+        },
+        approved_by: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
         },
     },
     { timestamps: true }
 );
 
-export const FundRequest = mongoose.model("FundRequest", fundRequestSchema);
+export const Finance = mongoose.model("Finance", financeSchema);
