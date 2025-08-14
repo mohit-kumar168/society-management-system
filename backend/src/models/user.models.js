@@ -44,13 +44,19 @@ const userSchema = new Schema(
             enum: ["admin", "convenor", "leader", "member", "guest"],
             required: true,
         },
+        status: {
+            type: String,
+            enum: ["active", "inactive", "pending"],
+            default: "active",
+        },
         profilePicture: {
             type: String,
             default: null,
         },
-        studentId: {
+        collegeId: {
             type: String,
             unique: true,
+            sparse: true,
             required: true,
         },
         socialLinks: socialLinksSchema,
@@ -62,7 +68,7 @@ const userSchema = new Schema(
     { timestamps: true }
 );
 
-userSchema.pre("save", async function () {
+userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
 
     this.password = await bcrypt.hash(this.password, 10);
