@@ -1,10 +1,12 @@
-# User Registration API Documentation
+# User Controller API Documentation
 
 ## Overview
 
-The User Registration API allows new users to register in the Society Management System with role-based access control and optional profile picture upload.
+The User Controller provides endpoints for user authentication and registration in the Society Management System with role-based access control and profile picture upload functionality.
 
 ---
+
+# 1. User Registration
 
 ## Endpoint Details
 
@@ -87,40 +89,6 @@ The User Registration API allows new users to register in the Society Management
 | `collegeId`      | Text | `COL2024001`           |
 | `role`           | Text | `member`               |
 | `profilePicture` | File | _Select image file_    |
-
-### Using cURL
-
-```bash
-curl -X POST http://localhost:3000/api/v1/users/register \
-  -F "firstName=John" \
-  -F "lastName=Doe" \
-  -F "email=john.doe@example.com" \
-  -F "password=securePassword123" \
-  -F "collegeId=COL2024001" \
-  -F "role=member" \
-  -F "profilePicture=@/path/to/image.jpg"
-```
-
-### Using JavaScript/Fetch
-
-```javascript
-const formData = new FormData();
-formData.append("firstName", "John");
-formData.append("lastName", "Doe");
-formData.append("email", "john.doe@example.com");
-formData.append("password", "securePassword123");
-formData.append("collegeId", "COL2024001");
-formData.append("role", "member");
-formData.append("profilePicture", fileInput.files[0]); // File object
-
-fetch("http://localhost:3000/api/v1/users/register", {
-    method: "POST",
-    body: formData,
-})
-    .then((response) => response.json())
-    .then((data) => console.log(data))
-    .catch((error) => console.error("Error:", error));
-```
 
 ---
 
@@ -215,6 +183,141 @@ fetch("http://localhost:3000/api/v1/users/register", {
     "success": false
 }
 ```
+
+---
+
+# 2. User Login
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/login`  
+**Method:** `POST`  
+**Content-Type:** `application/json`  
+**Authentication:** Not required
+
+---
+
+## Request Parameters
+
+### Required Fields
+
+| Field      | Type   | Description          | Validation                    |
+| ---------- | ------ | -------------------- | ----------------------------- |
+| `email`    | String | User's email address | Required, must be valid email |
+| `password` | String | User's password      | Required                      |
+
+---
+
+## Request Examples
+
+### Using Postman (JSON)
+
+**Method:** `POST`  
+**URL:** `http://localhost:3000/api/v1/users/login`  
+**Body Type:** `raw` (JSON)
+
+```json
+{
+    "email": "john.doe@example.com",
+    "password": "securePassword123"
+}
+```
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "User logged in successfully",
+    "data": {
+        "user": {
+            "id": "64f1234567890abcdef12345",
+            "email": "john.doe@example.com",
+            "fullName": {
+                "firstName": "John",
+                "lastName": "Doe"
+            },
+            "role": "member"
+        },
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    },
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request - Missing Required Fields
+
+```json
+{
+    "statusCode": 400,
+    "message": "Email and password are required",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Invalid Credentials
+
+```json
+{
+    "statusCode": 401,
+    "message": "Invalid credentials",
+    "data": null,
+    "success": false
+}
+```
+
+#### 403 Forbidden - Account Not Active
+
+```json
+{
+    "statusCode": 403,
+    "message": "Account is pending approval or inactive",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to generate tokens",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+## Authentication Features
+
+### JWT Tokens
+
+- **Access Token:** Short-lived token (1 day) for API authentication
+- **Refresh Token:** Long-lived token (10 days) for token renewal
+- Both tokens are set as HTTP-only cookies for security
+
+### Cookies Set
+
+| Cookie Name    | Properties                   | Purpose            |
+| -------------- | ---------------------------- | ------------------ |
+| `accessToken`  | httpOnly: true, secure: true | API authentication |
+| `refreshToken` | httpOnly: true, secure: true | Token renewal      |
+
+### Account Status Validation
+
+- Only users with `status: "active"` can login
+- Users with `status: "pending"` must wait for admin approval
+- Users with `status: "inactive"` are blocked from login
 
 ---
 
@@ -338,52 +441,63 @@ fetch("http://localhost:3000/api/v1/users/register", {
 
 ## Testing
 
-### Test Cases
+### Registration Test Cases (Postman)
 
 1. **Valid Registration (No File)**
-
-    ```bash
-    curl -X POST http://localhost:3000/api/v1/users/register \
-      -F "firstName=Test" \
-      -F "lastName=User" \
-      -F "email=test@example.com" \
-      -F "password=test123" \
-      -F "collegeId=TEST001" \
-      -F "role=guest"
-    ```
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/register`
+    - Body Type: `form-data`
+    - Data: firstName, lastName, email, password, collegeId, role
 
 2. **Valid Registration (With File)**
-
-    ```bash
-    curl -X POST http://localhost:3000/api/v1/users/register \
-      -F "firstName=Test" \
-      -F "lastName=User" \
-      -F "email=test2@example.com" \
-      -F "password=test123" \
-      -F "collegeId=TEST002" \
-      -F "role=member" \
-      -F "profilePicture=@test-image.jpg"
-    ```
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/register`
+    - Body Type: `form-data`
+    - Data: All registration fields + profilePicture (file)
 
 3. **Missing Required Field**
-
-    ```bash
-    curl -X POST http://localhost:3000/api/v1/users/register \
-      -F "firstName=Test" \
-      -F "email=test3@example.com"
-    ```
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/register`
+    - Body Type: `form-data`
+    - Data: Only firstName and email (missing password)
 
 4. **Duplicate Email**
-    ```bash
-    # Register same user twice
-    curl -X POST http://localhost:3000/api/v1/users/register \
-      -F "firstName=Test" \
-      -F "lastName=User" \
-      -F "email=duplicate@example.com" \
-      -F "password=test123" \
-      -F "collegeId=DUP001" \
-      -F "role=guest"
-    ```
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/register`
+    - Body Type: `form-data`
+    - Data: Register with an email that already exists
+
+### Login Test Cases (Postman)
+
+1. **Valid Login**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/login`
+    - Body Type: `raw` (JSON)
+    - Data: `{"email": "test@example.com", "password": "validPassword"}`
+
+2. **Invalid Email**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/login`
+    - Body Type: `raw` (JSON)
+    - Data: `{"email": "wrong@example.com", "password": "validPassword"}`
+
+3. **Invalid Password**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/login`
+    - Body Type: `raw` (JSON)
+    - Data: `{"email": "test@example.com", "password": "wrongPassword"}`
+
+4. **Missing Fields**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/login`
+    - Body Type: `raw` (JSON)
+    - Data: `{"email": "test@example.com"}` (missing password)
+
+5. **Pending Account**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/login`
+    - Body Type: `raw` (JSON)
+    - Data: Login with account that has `status: "pending"`
 
 ---
 
@@ -446,10 +560,11 @@ NODE_ENV=development
 
 ## Related Endpoints
 
-- **Login:** `POST /api/v1/users/login`
-- **Profile Update:** `PATCH /api/v1/users/profile`
-- **Upload Profile Picture:** `PATCH /api/v1/users/upload-profile-picture/:userId`
-- **User Management:** `GET /api/v1/users/` (Admin only)
+- **User Registration:** `POST /api/v1/users/register`
+- **User Login:** `POST /api/v1/users/login`
+- **Profile Update:** `PATCH /api/v1/users/profile` (Coming Soon)
+- **Upload Profile Picture:** `PATCH /api/v1/users/upload-profile-picture/:userId` (Coming Soon)
+- **User Management:** `GET /api/v1/users/` (Admin only - Coming Soon)
 
 ---
 

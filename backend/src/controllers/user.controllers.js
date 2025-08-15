@@ -38,13 +38,25 @@ const registerUser = async (req, res) => {
             $or: [{ email }, { collegeId }],
         });
         if (existingUser) {
-            if (req.file) {
-                fs.unlinkSync(req.file.path);
+            if (profilePictureFile) {
+                fs.unlinkSync(profilePictureFile.path);
             }
             throw new apiError(400, "User with this email already exists");
         }
 
-        let profilePictureFile = req.file;
+        let profilePictureFile = req.files?.profilePicture?.[0];
+        console.log("🔍 File received:", profilePictureFile ? "Yes" : "No");
+        console.log("🔍 req.files:", req.files);
+        console.log("🔍 req.file:", req.file);
+
+        if (profilePictureFile) {
+            console.log("📁 File details:", {
+                filename: profilePictureFile.filename,
+                path: profilePictureFile.path,
+                mimetype: profilePictureFile.mimetype,
+                size: profilePictureFile.size,
+            });
+        }
 
         const userData = {
             ...req.body,
@@ -52,8 +64,13 @@ const registerUser = async (req, res) => {
         };
 
         const registrationResult = await handleRoleBasedRegistration(userData);
+        console.log(
+            "✅ User registration result:",
+            registrationResult.user ? "Success" : "Failed"
+        );
 
         if (profilePictureFile && registrationResult.user) {
+            console.log("🚀 Starting Cloudinary upload...");
             try {
                 const profilePictureUpload = await uploadToUserFolder(
                     profilePictureFile.path,
@@ -62,7 +79,13 @@ const registerUser = async (req, res) => {
                     "profile_picture"
                 );
 
+                console.log(
+                    "📤 Cloudinary upload result:",
+                    profilePictureUpload
+                );
+
                 if (profilePictureUpload?.secure_url) {
+                    console.log("🔄 Updating user with profile picture URL...");
                     const updatedUser = await User.findByIdAndUpdate(
                         registrationResult.user._id,
                         {
@@ -75,9 +98,25 @@ const registerUser = async (req, res) => {
 
                     registrationResult.user.profilePicture =
                         profilePictureUpload.secure_url;
+                    console.log("✅ Profile picture URL updated successfully");
+                } else {
+                    console.log("⚠️ No secure_url received from Cloudinary");
                 }
             } catch (uploadError) {
                 console.error("❌ Profile picture upload failed:", uploadError);
+                console.error("📋 Error details:", {
+                    message: uploadError.message,
+                    stack: uploadError.stack,
+                });
+            }
+        } else {
+            if (!profilePictureFile) {
+                console.log("ℹ️ No profile picture file to upload");
+            }
+            if (!registrationResult.user) {
+                console.log(
+                    "❌ User registration failed, skipping file upload"
+                );
             }
         }
 
@@ -91,7 +130,12 @@ const registerUser = async (req, res) => {
                 )
             );
     } catch (error) {
-        console.error("❌ Profile picture upload failed:", error);
+        console.error("❌ Registration failed:", error);
+        console.error("📋 Error details:", {
+            message: error.message,
+            statusCode: error.statusCode,
+            stack: error.stack,
+        });
         throw new apiError(
             error.statusCode || 500,
             error.message || "Failed to register user"
