@@ -298,6 +298,684 @@ The User Controller provides endpoints for user authentication and registration 
 
 ---
 
+# 3. User Logout
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/logout`  
+**Method:** `POST`  
+**Content-Type:** `application/json`  
+**Authentication:** Required (JWT Token)
+
+---
+
+## Request Parameters
+
+### Headers Required
+
+| Header          | Value                       | Description                |
+| --------------- | --------------------------- | -------------------------- |
+| `Authorization` | `Bearer <access_token>`     | JWT access token           |
+| `Cookie`        | `accessToken=<token_value>` | Or access token via cookie |
+
+### Request Body
+
+No request body required.
+
+---
+
+## Request Examples
+
+### Using Postman (JSON)
+
+**Method:** `POST`  
+**URL:** `http://localhost:3000/api/v1/users/logout`  
+**Headers:**
+
+- `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`  
+  **Body Type:** `raw` (JSON) - Leave empty
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "User logged out successfully",
+    "data": {},
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 401 Unauthorized - Missing/Invalid Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Invalid Access Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Invalid access token",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to logout user",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+## Logout Process
+
+### What Happens During Logout
+
+1. **Token Validation:** Verifies the provided access token
+2. **Database Update:** Sets user's `refreshToken` field to `null`
+3. **Cookie Clearing:** Clears both `accessToken` and `refreshToken` cookies
+4. **Session Termination:** Invalidates the current session
+
+### Cookies Cleared
+
+| Cookie Name    | Action                     |
+| -------------- | -------------------------- |
+| `accessToken`  | Cleared with httpOnly flag |
+| `refreshToken` | Cleared with httpOnly flag |
+
+---
+
+# 4. Refresh Access Token
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/refresh-token`  
+**Method:** `POST`  
+**Content-Type:** `application/json`  
+**Authentication:** Required (Refresh Token)
+
+---
+
+## Request Parameters
+
+### Option 1: Using Cookie (Recommended)
+
+The refresh token is automatically read from the `refreshToken` cookie.
+
+### Option 2: Using Request Body
+
+| Field          | Type   | Description             | Validation |
+| -------------- | ------ | ----------------------- | ---------- |
+| `refreshToken` | String | Valid JWT refresh token | Required   |
+
+---
+
+## Request Examples
+
+### Using Postman (Cookie Method)
+
+**Method:** `POST`  
+**URL:** `http://localhost:3000/api/v1/users/refresh-token`  
+**Body Type:** `raw` (JSON) - Leave empty  
+**Note:** Refresh token cookie is sent automatically
+
+### Using Postman (Body Method)
+
+**Method:** `POST`  
+**URL:** `http://localhost:3000/api/v1/users/refresh-token`  
+**Body Type:** `raw` (JSON)
+
+```json
+{
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "Access token refreshed successfully",
+    "data": {
+        "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    },
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 401 Unauthorized - Missing Refresh Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Invalid Refresh Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Invalid refresh token",
+    "data": null,
+    "success": false
+}
+```
+
+#### 404 Not Found - User Not Found
+
+```json
+{
+    "statusCode": 404,
+    "message": "Invalid refresh token",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to refresh access token",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+## Token Refresh Process
+
+### What Happens During Refresh
+
+1. **Token Validation:** Verifies the provided refresh token
+2. **User Verification:** Checks if user exists in database
+3. **Token Comparison:** Compares provided token with stored refresh token
+4. **New Token Generation:** Generates new access and refresh tokens
+5. **Database Update:** Updates user's refresh token in database
+6. **Cookie Update:** Sets new tokens as HTTP-only cookies
+
+### New Cookies Set
+
+| Cookie Name    | Properties                   | Contains              |
+| -------------- | ---------------------------- | --------------------- |
+| `accessToken`  | httpOnly: true, secure: true | New JWT access token  |
+| `refreshToken` | httpOnly: true, secure: true | New JWT refresh token |
+
+---
+
+# 5. Update Password
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/update-password`  
+**Method:** `POST`  
+**Content-Type:** `application/json`  
+**Authentication:** Required (JWT Token)
+
+---
+
+## Request Parameters
+
+### Headers Required
+
+| Header          | Value                       | Description                |
+| --------------- | --------------------------- | -------------------------- |
+| `Authorization` | `Bearer <access_token>`     | JWT access token           |
+| `Cookie`        | `accessToken=<token_value>` | Or access token via cookie |
+
+### Required Fields
+
+| Field             | Type   | Description             | Validation |
+| ----------------- | ------ | ----------------------- | ---------- |
+| `currentPassword` | String | User's current password | Required   |
+| `newPassword`     | String | New password to set     | Required   |
+
+---
+
+## Request Examples
+
+### Using Postman (JSON)
+
+**Method:** `POST`  
+**URL:** `http://localhost:3000/api/v1/users/update-password`  
+**Headers:**
+
+- `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`  
+  **Body Type:** `raw` (JSON)
+
+```json
+{
+    "currentPassword": "oldPassword123",
+    "newPassword": "newSecurePassword456"
+}
+```
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "Password updated successfully",
+    "data": {},
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request - Incorrect Current Password
+
+```json
+{
+    "statusCode": 400,
+    "message": "Current password is incorrect",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Missing/Invalid Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to update password",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+# 6. Get Current User
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/current-user`  
+**Method:** `GET`  
+**Content-Type:** `application/json`  
+**Authentication:** Required (JWT Token)
+
+---
+
+## Request Parameters
+
+### Headers Required
+
+| Header          | Value                       | Description                |
+| --------------- | --------------------------- | -------------------------- |
+| `Authorization` | `Bearer <access_token>`     | JWT access token           |
+| `Cookie`        | `accessToken=<token_value>` | Or access token via cookie |
+
+### Request Body
+
+No request body required.
+
+---
+
+## Request Examples
+
+### Using Postman (JSON)
+
+**Method:** `GET`  
+**URL:** `http://localhost:3000/api/v1/users/current-user`  
+**Headers:**
+
+- `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`  
+  **Body Type:** None
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "Current user details fetched",
+    "data": {
+        "_id": "64f1234567890abcdef12345",
+        "fullName": {
+            "firstName": "John",
+            "lastName": "Doe"
+        },
+        "email": "john.doe@example.com",
+        "role": "member",
+        "status": "active",
+        "profilePicture": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/sms/users/member_64f1234567890abcdef12345/profile_picture.jpg",
+        "collegeId": "COL2024001",
+        "socialLinks": {
+            "linkedin": null,
+            "github": null,
+            "instagram": null,
+            "twitter": null,
+            "website": null
+        },
+        "createdAt": "2024-08-14T10:30:00.000Z",
+        "updatedAt": "2024-08-14T10:30:00.000Z"
+    },
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 401 Unauthorized - Missing/Invalid Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to fetch user details",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+# 7. Update Account Details
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/update-account`  
+**Method:** `PATCH`  
+**Content-Type:** `application/json`  
+**Authentication:** Required (JWT Token)
+
+---
+
+## Request Parameters
+
+### Headers Required
+
+| Header          | Value                       | Description                |
+| --------------- | --------------------------- | -------------------------- |
+| `Authorization` | `Bearer <access_token>`     | JWT access token           |
+| `Cookie`        | `accessToken=<token_value>` | Or access token via cookie |
+
+### Required Fields
+
+| Field       | Type   | Description       | Validation                   |
+| ----------- | ------ | ----------------- | ---------------------------- |
+| `firstName` | String | User's first name | Required, cannot be empty    |
+| `lastName`  | String | User's last name  | Required, cannot be empty    |
+| `email`     | String | User's email      | Required, valid email format |
+
+---
+
+## Request Examples
+
+### Using Postman (JSON)
+
+**Method:** `PATCH`  
+**URL:** `http://localhost:3000/api/v1/users/update-account`  
+**Headers:**
+
+- `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`  
+  **Body Type:** `raw` (JSON)
+
+```json
+{
+    "firstName": "John",
+    "lastName": "Smith",
+    "email": "john.smith@example.com"
+}
+```
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "Account details updated successfully",
+    "data": {
+        "_id": "64f1234567890abcdef12345",
+        "fullName": {
+            "firstName": "John",
+            "lastName": "Smith"
+        },
+        "email": "john.smith@example.com",
+        "role": "member",
+        "status": "active",
+        "profilePicture": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/sms/users/member_64f1234567890abcdef12345/profile_picture.jpg",
+        "collegeId": "COL2024001",
+        "socialLinks": {
+            "linkedin": null,
+            "github": null,
+            "instagram": null,
+            "twitter": null,
+            "website": null
+        },
+        "createdAt": "2024-08-14T10:30:00.000Z",
+        "updatedAt": "2024-08-15T14:22:00.000Z"
+    },
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request - Missing Required Fields
+
+```json
+{
+    "statusCode": 400,
+    "message": "First name, last name, and email are required",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Missing/Invalid Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to update account details",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+# 8. Update Profile Picture
+
+## Endpoint Details
+
+**URL:** `/api/v1/users/profile-picture`  
+**Method:** `PATCH`  
+**Content-Type:** `multipart/form-data`  
+**Authentication:** Required (JWT Token)
+
+---
+
+## Request Parameters
+
+### Headers Required
+
+| Header          | Value                       | Description                |
+| --------------- | --------------------------- | -------------------------- |
+| `Authorization` | `Bearer <access_token>`     | JWT access token           |
+| `Cookie`        | `accessToken=<token_value>` | Or access token via cookie |
+
+### Required Fields
+
+| Field            | Type | Description         | Validation                         |
+| ---------------- | ---- | ------------------- | ---------------------------------- |
+| `profilePicture` | File | New profile picture | Required, image file only, max 5MB |
+
+---
+
+## Request Examples
+
+### Using Postman (Form-Data)
+
+**Method:** `PATCH`  
+**URL:** `http://localhost:3000/api/v1/users/profile-picture`  
+**Headers:**
+
+- `Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`  
+  **Body Type:** `form-data`
+
+| Key              | Type | Value               |
+| ---------------- | ---- | ------------------- |
+| `profilePicture` | File | _Select image file_ |
+
+---
+
+## Response Format
+
+### Success Response (200 OK)
+
+```json
+{
+    "statusCode": 200,
+    "message": "Profile picture updated successfully",
+    "data": {
+        "profilePicture": "https://res.cloudinary.com/your-cloud/image/upload/v1234567890/sms/users/member_64f1234567890abcdef12345/updated_profile_picture.jpg"
+    },
+    "success": true
+}
+```
+
+### Error Responses
+
+#### 400 Bad Request - Missing File
+
+```json
+{
+    "statusCode": 400,
+    "message": "Profile picture file is required",
+    "data": null,
+    "success": false
+}
+```
+
+#### 401 Unauthorized - Missing/Invalid Token
+
+```json
+{
+    "statusCode": 401,
+    "message": "Unauthorized request",
+    "data": null,
+    "success": false
+}
+```
+
+#### 500 Internal Server Error - Upload Failed
+
+```json
+{
+    "statusCode": 500,
+    "message": "Failed to upload profile picture",
+    "data": null,
+    "success": false
+}
+```
+
+---
+
+## Profile Picture Update Process
+
+### What Happens During Update
+
+1. **Authentication:** Verifies the provided access token
+2. **File Validation:** Checks if profile picture file is provided
+3. **User Retrieval:** Gets current user details from database
+4. **New Upload:** Uploads new profile picture to user's Cloudinary folder
+5. **Database Update:** Updates user's `profilePicture` field with new URL
+6. **Old Image Removal:** Removes previous profile picture from Cloudinary
+7. **Response:** Returns new profile picture URL
+
+### File Specifications
+
+| Specification    | Details                                      |
+| ---------------- | -------------------------------------------- |
+| **File Types**   | Image files only (jpg, jpeg, png, gif, webp) |
+| **Maximum Size** | 5 MB                                         |
+| **Storage**      | Cloudinary cloud storage                     |
+| **Folder**       | `sms/users/{role}_{userId}/`                 |
+| **Public ID**    | `updated_profile_picture`                    |
+
+---
+
 ## Authentication Features
 
 ### JWT Tokens
@@ -499,6 +1177,154 @@ The User Controller provides endpoints for user authentication and registration 
     - Body Type: `raw` (JSON)
     - Data: Login with account that has `status: "pending"`
 
+### Logout Test Cases (Postman)
+
+1. **Valid Logout**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/logout`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON) - Leave empty
+
+2. **Missing Authorization Header**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/logout`
+    - Headers: No Authorization header
+    - Body Type: `raw` (JSON) - Leave empty
+
+3. **Invalid Access Token**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/logout`
+    - Headers: `Authorization: Bearer invalid_token`
+    - Body Type: `raw` (JSON) - Leave empty
+
+### Refresh Token Test Cases (Postman)
+
+1. **Valid Refresh (Cookie Method)**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/refresh-token`
+    - Body Type: `raw` (JSON) - Leave empty
+    - Note: Refresh token cookie sent automatically
+
+2. **Valid Refresh (Body Method)**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/refresh-token`
+    - Body Type: `raw` (JSON)
+    - Data: `{"refreshToken": "valid_refresh_token"}`
+
+3. **Missing Refresh Token**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/refresh-token`
+    - Body Type: `raw` (JSON) - Leave empty
+    - Note: No refresh token cookie or body
+
+4. **Invalid Refresh Token**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/refresh-token`
+    - Body Type: `raw` (JSON)
+    - Data: `{"refreshToken": "invalid_token"}`
+
+5. **Expired Refresh Token**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/refresh-token`
+    - Body Type: `raw` (JSON)
+    - Data: Use an expired refresh token
+
+### Update Password Test Cases (Postman)
+
+1. **Valid Password Update**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/update-password`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON)
+    - Data: `{"currentPassword": "oldPassword", "newPassword": "newPassword123"}`
+
+2. **Incorrect Current Password**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/update-password`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON)
+    - Data: `{"currentPassword": "wrongPassword", "newPassword": "newPassword123"}`
+
+3. **Missing Authorization**
+    - Method: `POST`
+    - URL: `http://localhost:3000/api/v1/users/update-password`
+    - Headers: No Authorization header
+    - Body Type: `raw` (JSON)
+    - Data: `{"currentPassword": "oldPassword", "newPassword": "newPassword123"}`
+
+### Get Current User Test Cases (Postman)
+
+1. **Valid Request**
+    - Method: `GET`
+    - URL: `http://localhost:3000/api/v1/users/current-user`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: None
+
+2. **Missing Authorization**
+    - Method: `GET`
+    - URL: `http://localhost:3000/api/v1/users/current-user`
+    - Headers: No Authorization header
+    - Body Type: None
+
+3. **Invalid Token**
+    - Method: `GET`
+    - URL: `http://localhost:3000/api/v1/users/current-user`
+    - Headers: `Authorization: Bearer invalid_token`
+    - Body Type: None
+
+### Update Account Details Test Cases (Postman)
+
+1. **Valid Update**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/update-account`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON)
+    - Data: `{"firstName": "John", "lastName": "Smith", "email": "john.smith@example.com"}`
+
+2. **Missing Required Fields**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/update-account`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON)
+    - Data: `{"firstName": "John"}` (missing lastName and email)
+
+3. **Invalid Email Format**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/update-account`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `raw` (JSON)
+    - Data: `{"firstName": "John", "lastName": "Smith", "email": "invalid-email"}`
+
+### Update Profile Picture Test Cases (Postman)
+
+1. **Valid Picture Update**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/profile-picture`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `form-data`
+    - Data: profilePicture (select image file)
+
+2. **Missing File**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/profile-picture`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `form-data`
+    - Data: No file selected
+
+3. **Invalid File Type**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/profile-picture`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `form-data`
+    - Data: profilePicture (select non-image file like .txt or .pdf)
+
+4. **File Too Large**
+    - Method: `PATCH`
+    - URL: `http://localhost:3000/api/v1/users/profile-picture`
+    - Headers: `Authorization: Bearer <valid_access_token>`
+    - Body Type: `form-data`
+    - Data: profilePicture (select image file larger than 5MB)
+
 ---
 
 ## Environment Variables Required
@@ -556,14 +1382,69 @@ NODE_ENV=development
 - Check network connection
 - Increase server timeout limits if needed
 
+### Issue: "Unauthorized request" during logout
+
+**Solutions:**
+
+- Ensure Authorization header is included: `Authorization: Bearer <token>`
+- Check if access token is valid and not expired
+- Verify token format is correct
+
+### Issue: "Invalid refresh token"
+
+**Solutions:**
+
+- Check if refresh token is expired
+- Ensure refresh token matches the one stored in database
+- Verify refresh token format is correct
+- User may need to login again if refresh token is invalid
+
+### Issue: Logout not clearing cookies properly
+
+**Solutions:**
+
+- Check if cookies were set with correct domain and path
+- Verify browser is accepting/sending cookies
+- Clear browser cookies manually if needed
+
+### Issue: "Current password is incorrect" during password update
+
+**Solutions:**
+
+- Verify the current password is entered correctly
+- Check if password contains special characters that might be encoded differently
+- Ensure user is authenticated and token is valid
+
+### Issue: Profile picture update removes old image but fails to upload new one
+
+**Solutions:**
+
+- Check Cloudinary credentials and connectivity
+- Verify file size is under 5MB limit
+- Ensure file format is supported (jpg, jpeg, png, gif, webp)
+- Check if temporary file path is accessible
+
+### Issue: Account details update fails with validation errors
+
+**Solutions:**
+
+- Ensure all required fields (firstName, lastName, email) are provided
+- Verify email format is valid
+- Check for any special characters that might cause issues
+- Ensure field values are not empty or just whitespace
+
 ---
 
 ## Related Endpoints
 
 - **User Registration:** `POST /api/v1/users/register`
 - **User Login:** `POST /api/v1/users/login`
-- **Profile Update:** `PATCH /api/v1/users/profile` (Coming Soon)
-- **Upload Profile Picture:** `PATCH /api/v1/users/upload-profile-picture/:userId` (Coming Soon)
+- **User Logout:** `POST /api/v1/users/logout`
+- **Refresh Access Token:** `POST /api/v1/users/refresh-token`
+- **Update Password:** `POST /api/v1/users/update-password`
+- **Get Current User:** `GET /api/v1/users/current-user`
+- **Update Account Details:** `PATCH /api/v1/users/update-account`
+- **Update Profile Picture:** `PATCH /api/v1/users/profile-picture`
 - **User Management:** `GET /api/v1/users/` (Admin only - Coming Soon)
 
 ---
