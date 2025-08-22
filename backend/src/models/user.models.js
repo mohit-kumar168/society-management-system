@@ -23,8 +23,9 @@ const userSchema = new Schema(
             },
             lastName: {
                 type: String,
-                required: true,
+                required: false,
                 trim: true,
+                default: "",
             },
         },
         email: {
@@ -41,7 +42,7 @@ const userSchema = new Schema(
         },
         role: {
             type: String,
-            enum: ["admin", "convenor", "leader", "member", "guest"],
+            enum: ["admin", "convenor", "leader", "member"],
             required: true,
         },
         status: {

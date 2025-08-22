@@ -18,9 +18,11 @@ const handleRoleBasedRegistration = async (userData) => {
         case "member":
             return await registerMember(userData);
 
-        case "guest":
         default:
-            return await registerGuest(userData);
+            throw new apiError(
+                400,
+                "Invalid role. Allowed roles: admin, convenor, leader, member"
+            );
     }
 };
 
@@ -88,19 +90,6 @@ const registerMember = async (userData) => {
 
     return {
         message: "Member registration submitted. Awaiting admin approval.",
-        user,
-    };
-};
-
-const registerGuest = async (userData) => {
-    const user = await createUser({
-        ...userData,
-        role: "guest",
-        status: "active",
-    });
-
-    return {
-        message: "Guest registered successfully",
         user,
     };
 };

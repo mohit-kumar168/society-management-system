@@ -6,11 +6,12 @@ const createUser = async (userData) => {
         const user = await User.create({
             fullName: {
                 firstName: userData.firstName || userData.fullName?.firstName,
-                lastName: userData.lastName || userData.fullName?.lastName,
+                lastName:
+                    userData.lastName || userData.fullName?.lastName || "",
             },
             email: userData.email,
             password: userData.password,
-            role: userData.role || "guest",
+            role: userData.role,
             status: userData.status || "pending",
             profilePicture: userData.profilePicture || null,
             collegeId: userData.collegeId,
@@ -23,7 +24,8 @@ const createUser = async (userData) => {
         );
         return createdUser;
     } catch (error) {
-        throw new apiError(500, "Failed to create user");
+        console.error("❌ User creation error:", error);
+        throw new apiError(500, `Failed to create user: ${error.message}`);
     }
 };
 

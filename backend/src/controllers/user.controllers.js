@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { handleRoleBasedRegistration } from "../utils/userRegistration.js";
+import { options } from "../contants.js";
 import {
     removeFromCloudinary,
     uploadToUserFolder,
@@ -35,35 +36,24 @@ const registerUser = async (req, res) => {
         }
 
         if (
-            [firstName, email, password].some(
+            [firstName, email, password, role].some(
                 (field) => !field || field?.trim() === ""
             )
         ) {
             throw new apiError(400, "All fields are required");
         }
 
+        // Get profile picture file
+        const profilePictureFile = req.files?.profilePicture?.[0];
+
         const existingUser = await User.findOne({
             $or: [{ email }, { collegeId }],
         });
         if (existingUser) {
-            if (profilePictureFile) {
+            if (profilePictureFile && fs.existsSync(profilePictureFile.path)) {
                 fs.unlinkSync(profilePictureFile.path);
             }
             throw new apiError(400, "User with this email already exists");
-        }
-
-        let profilePictureFile = req.files?.profilePicture?.[0];
-        console.log("🔍 File received:", profilePictureFile ? "Yes" : "No");
-        console.log("🔍 req.files:", req.files);
-        console.log("🔍 req.file:", req.file);
-
-        if (profilePictureFile) {
-            console.log("📁 File details:", {
-                filename: profilePictureFile.filename,
-                path: profilePictureFile.path,
-                mimetype: profilePictureFile.mimetype,
-                size: profilePictureFile.size,
-            });
         }
 
         const userData = {
@@ -72,13 +62,8 @@ const registerUser = async (req, res) => {
         };
 
         const registrationResult = await handleRoleBasedRegistration(userData);
-        console.log(
-            "✅ User registration result:",
-            registrationResult.user ? "Success" : "Failed"
-        );
 
         if (profilePictureFile && registrationResult.user) {
-            console.log("🚀 Starting Cloudinary upload...");
             try {
                 const profilePictureUpload = await uploadToUserFolder(
                     profilePictureFile.path,
@@ -87,44 +72,24 @@ const registerUser = async (req, res) => {
                     "profile_picture"
                 );
 
-                console.log(
-                    "📤 Cloudinary upload result:",
-                    profilePictureUpload
-                );
-
                 if (profilePictureUpload?.secure_url) {
-                    console.log("🔄 Updating user with profile picture URL...");
-                    const updatedUser = await User.findByIdAndUpdate(
+                    await User.findByIdAndUpdate(
                         registrationResult.user._id,
                         {
                             profilePicture: profilePictureUpload.secure_url,
                         },
-                        {
-                            new: true,
-                        }
+                        { new: true }
                     );
 
                     registrationResult.user.profilePicture =
                         profilePictureUpload.secure_url;
-                    console.log("✅ Profile picture URL updated successfully");
-                } else {
-                    console.log("⚠️ No secure_url received from Cloudinary");
                 }
             } catch (uploadError) {
                 console.error("❌ Profile picture upload failed:", uploadError);
-                console.error("📋 Error details:", {
-                    message: uploadError.message,
-                    stack: uploadError.stack,
-                });
             }
         } else {
             if (!profilePictureFile) {
                 console.log("ℹ️ No profile picture file to upload");
-            }
-            if (!registrationResult.user) {
-                console.log(
-                    "❌ User registration failed, skipping file upload"
-                );
             }
         }
 
@@ -139,11 +104,17 @@ const registerUser = async (req, res) => {
             );
     } catch (error) {
         console.error("❌ Registration failed:", error);
-        console.error("📋 Error details:", {
-            message: error.message,
-            statusCode: error.statusCode,
-            stack: error.stack,
-        });
+
+        // Clean up uploaded file if registration failed
+        const profilePictureFile = req.files?.profilePicture?.[0];
+        if (profilePictureFile && fs.existsSync(profilePictureFile.path)) {
+            try {
+                fs.unlinkSync(profilePictureFile.path);
+            } catch (cleanupError) {
+                console.error("❌ Failed to clean up file:", cleanupError);
+            }
+        }
+
         throw new apiError(
             error.statusCode || 500,
             error.message || "Failed to register user"
@@ -177,26 +148,25 @@ const loginUser = async (req, res) => {
         const { accessToken, refreshToken } =
             await generateAccessAndRefreshTokens(user._id);
 
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
-
         return res
             .status(200)
             .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", refreshToken, options)
             .json(
-                new apiResponse(200, "User logged in successfully", {
-                    user: {
-                        id: user._id,
-                        email: user.email,
-                        fullName: user.fullName,
-                        role: user.role,
+                new apiResponse(
+                    200,
+                    {
+                        user: {
+                            id: user._id,
+                            email: user.email,
+                            fullName: user.fullName,
+                            role: user.role,
+                        },
+                        accessToken,
+                        refreshToken,
                     },
-                    accessToken,
-                    refreshToken,
-                })
+                    "User logged in successfully"
+                )
             );
     } catch (error) {
         throw new apiError(error.statusCode || 500, error.message);
@@ -214,11 +184,6 @@ const logoutUser = async (req, res) => {
             },
             { new: true }
         );
-
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
 
         return res
             .status(200)
@@ -259,11 +224,6 @@ const refreshAccessToken = async (req, res) => {
         await User.findByIdAndUpdate(user._id, {
             refreshToken: newRefreshToken,
         });
-
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
 
         return res
             .status(200)

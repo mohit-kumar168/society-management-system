@@ -21,13 +21,13 @@ The User Controller provides endpoints for user authentication and registration 
 
 ### Required Fields
 
-| Field       | Type   | Description                   | Validation                                                                 |
-| ----------- | ------ | ----------------------------- | -------------------------------------------------------------------------- |
-| `firstName` | String | User's first name             | Required, cannot be empty or whitespace only                               |
-| `email`     | String | User's email address          | Required, must be valid email format, unique                               |
-| `password`  | String | User's password               | Required, minimum 6 characters                                             |
-| `collegeId` | String | College identification number | Required, must be unique                                                   |
-| `role`      | String | User role in the system       | Required, must be one of: `admin`, `convenor`, `leader`, `member`, `guest` |
+| Field       | Type   | Description                   | Validation                                                        |
+| ----------- | ------ | ----------------------------- | ----------------------------------------------------------------- |
+| `firstName` | String | User's first name             | Required, cannot be empty or whitespace only                      |
+| `email`     | String | User's email address          | Required, must be valid email format, unique                      |
+| `password`  | String | User's password               | Required, minimum 6 characters                                    |
+| `collegeId` | String | College identification number | Required, must be unique                                          |
+| `role`      | String | User role in the system       | Required, must be one of: `admin`, `convenor`, `leader`, `member` |
 
 ### Optional Fields
 
@@ -63,12 +63,6 @@ The User Controller provides endpoints for user authentication and registration 
 - **Status:** `pending` (requires approval)
 - **Restriction:** Self-registration allowed
 - **Message:** "Member registration submitted. Awaiting admin approval."
-
-### Guest (Default)
-
-- **Status:** `active`
-- **Restriction:** Self-registration allowed
-- **Message:** "Guest registered successfully"
 
 ---
 
@@ -1034,7 +1028,7 @@ No request body required.
   },
   email: String,          // Required, unique, lowercase
   password: String,       // Required, hashed with bcrypt
-  role: String,           // Required, enum: admin|convenor|leader|member|guest
+  role: String,           // Required, enum: admin|convenor|leader|member
   status: String,         // enum: active|inactive|pending, default: active
   profilePicture: String, // Cloudinary URL, nullable
   collegeId: String,      // Required, unique
