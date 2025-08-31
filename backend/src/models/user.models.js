@@ -16,17 +16,8 @@ const socialLinksSchema = new Schema(
 const userSchema = new Schema(
     {
         fullName: {
-            firstName: {
-                type: String,
-                required: true,
-                trim: true,
-            },
-            lastName: {
-                type: String,
-                required: false,
-                trim: true,
-                default: "",
-            },
+            firstName: { type: String, required: true, trim: true },
+            lastName: { type: String, trim: true, default: "" },
         },
         email: {
             type: String,
@@ -35,11 +26,7 @@ const userSchema = new Schema(
             trim: true,
             lowercase: true,
         },
-        password: {
-            type: String,
-            required: true,
-            minlength: 6,
-        },
+        password: { type: String, required: true, minlength: 6, select: false }, // hide by default
         role: {
             type: String,
             enum: ["admin", "convenor", "leader", "member"],
@@ -50,20 +37,19 @@ const userSchema = new Schema(
             enum: ["active", "inactive", "pending"],
             default: "active",
         },
-        profilePicture: {
-            type: String,
-            default: null,
-        },
-        collegeId: {
-            type: String,
-            unique: true,
-            sparse: true,
-            required: true,
-        },
+        profilePicture: { type: String, default: null },
+        collegeId: { type: String, unique: true, required: true },
         socialLinks: socialLinksSchema,
-        refreshToken: {
+        refreshToken: { type: String, default: null, select: false },
+
+        // Useful for future features
+        lastLoginAt: { type: Date, default: null },
+        lastSeenAt: { type: Date, default: null }, // chat presence snapshot
+        failedLoginCount: { type: Number, default: 0 },
+        membershipStatus: {
             type: String,
-            default: null,
+            enum: ["none", "active", "expired"],
+            default: "none",
         },
     },
     { timestamps: true }
@@ -71,22 +57,18 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
-
     this.password = await bcrypt.hash(this.password, 10);
     next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password);
+    // password field is select:false, ensure this.password is loaded if needed
+    return bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
-        {
-            _id: this._id,
-            email: this.email,
-            role: this.role,
-        },
+        { _id: this._id, email: this.email, role: this.role },
         process.env.ACCESS_TOKEN_SECRET,
         {
             expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
@@ -95,15 +77,17 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign(
-        {
-            _id: this._id,
-        },
-        process.env.REFRESH_TOKEN_SECRET,
-        {
-            expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-        }
-    );
+    return jwt.sign({ _id: this._id }, process.env.REFRESH_TOKEN_SECRET, {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    });
 };
+
+userSchema.set("toJSON", {
+    transform: function (doc, ret) {
+        delete ret.password;
+        delete ret.refreshToken;
+        return ret;
+    },
+});
 
 export const User = mongoose.model("User", userSchema);

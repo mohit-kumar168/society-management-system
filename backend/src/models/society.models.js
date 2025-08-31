@@ -19,6 +19,11 @@ const societySchema = new Schema(
             ref: "User",
             required: true,
         },
+        leader: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
         members: [
             {
                 type: Schema.Types.ObjectId,
