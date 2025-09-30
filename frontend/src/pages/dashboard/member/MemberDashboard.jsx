@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardLayout from "../../components/DashboardLayout";
+import DashboardLayout from "../../../components/Layout/DashboardLayout";
 
 const MemberDashboard = () => {
     // Mock user data - replace with actual user data from context/state

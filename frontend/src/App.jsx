@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import Home from "./pages/guestPages/Home";
-import Societies from "./pages/guestPages/Societies";
-import Events from "./pages/guestPages/Events";
-import AboutUs from "./pages/guestPages/AboutUs";
-import SignIn from "./pages/authPages/SIgnIn";
-import SignUp from "./pages/authPages/SignUp";
+import Home from "./pages/guest/Home";
+import Societies from "./pages/guest/Societies";
+import Events from "./pages/guest/Events";
+import AboutUs from "./pages/guest/AboutUs";
+import SignIn from "./pages/auth/SIgnIn";
+import SignUp from "./pages/auth/SignUp";
 import AdminRoutes from "./routes/AdminRoutes";
 import ConvenorRoutes from "./routes/ConvenorRoutes";
 import MemberRoutes from "./routes/MemberRoutes";

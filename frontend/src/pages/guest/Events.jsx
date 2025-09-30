@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import Header from "../../components/Header";
+import Header from "../../components/Common/Header";
 
 const Events = () => {
     const [selectedCategory, setSelectedCategory] = useState("All");

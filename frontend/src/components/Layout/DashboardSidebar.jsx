@@ -7,15 +7,8 @@ const DashboardSidebar = ({ userRole }) => {
     const memberMenuItems = [
         { icon: "📊", label: "Overview", path: "/member" },
         { icon: "🏛️", label: "My Societies", path: "/member/societies" },
-        {
-            icon: "🔍",
-            label: "Browse Societies",
-            path: "/member/browse-societies",
-        },
         { icon: "📅", label: "My Events", path: "/member/events" },
-        { icon: "🎯", label: "Browse Events", path: "/member/browse-events" },
         { icon: "📄", label: "Schedule", path: "/member/schedule" },
-        { icon: "👥", label: "Team", path: "/member/team" },
         { icon: "📋", label: "Documents", path: "/member/documents" },
         { icon: "🔔", label: "Notifications", path: "/member/notifications" },
         { icon: "⚙️", label: "Settings", path: "/member/settings" },
@@ -75,7 +68,7 @@ const DashboardSidebar = ({ userRole }) => {
                             to={item.path}
                             className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 ${
                                 isActive
-                                    ? "bg-emerald-50 text-emerald-700 border-r-4 border-emerald-500"
+                                    ? "bg-emerald-50 text-gray-900 border-r-4 border-blue-400"
                                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                             }`}
                         >

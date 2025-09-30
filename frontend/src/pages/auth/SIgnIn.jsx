@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import Header from "../../components/Header";
+import Header from "../../components/Common/Header";
 
 const SignIn = () => {
     const navigate = useNavigate();
@@ -59,7 +59,7 @@ const SignIn = () => {
                             navigate("/leader/dashboard");
                             break;
                         case "member":
-                            navigate("/member/dashboard");
+                            navigate("/member");
                             break;
                         default:
                             navigate("/");
