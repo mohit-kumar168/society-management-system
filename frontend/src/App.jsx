@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Home from "./pages/guest/Home";
 import Societies from "./pages/guest/Societies";
@@ -55,9 +55,9 @@ const AppRoutes = () => {
 const App = () => {
     return (
         <AuthProvider>
-            <BrowserRouter>
+            <HashRouter>
                 <AppRoutes />
-            </BrowserRouter>
+            </HashRouter>
         </AuthProvider>
     );
 };
