@@ -14,5 +14,6 @@ export default defineConfig({
             },
         },
     },
+    base: "/society-management-system/",
     plugins: [react(), tailwindcss()],
 });
